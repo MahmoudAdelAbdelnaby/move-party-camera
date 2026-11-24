@@ -86,11 +86,24 @@ function onTv(data) {
   if (t === 12) paused = false;
 }
 
+// prefer H.264 for the camera video: phones and TVs have hardware for it (VP8 is often software = slow, hot)
+function preferH264(sdp) {
+  var L = sdp.split('\r\n'), mi = -1, i;
+  for (i = 0; i < L.length; i++) if (L[i].indexOf('m=video') === 0) { mi = i; break; }
+  if (mi < 0) return sdp;
+  var h = [];
+  for (i = 0; i < L.length; i++) { var m = /^a=rtpmap:(\d+) H264\/90000/i.exec(L[i]); if (m) h.push(m[1]); }
+  if (!h.length) return sdp;
+  var parts = L[mi].split(' '), head = parts.slice(0, 3), pts = parts.slice(3);
+  L[mi] = head.concat(pts.filter(function (p) { return h.indexOf(p) >= 0; }), pts.filter(function (p) { return h.indexOf(p) < 0; })).join(' ');
+  return L.join('\r\n');
+}
+
 // --- live video to the TV (a WebRTC media call next to the data link) ---
 function startVideo() {
   if (!video.srcObject) return;
   call?.close();
-  call = peer.call(tvId, video.srcObject);
+  call = peer.call(tvId, video.srcObject, { sdpTransform: preferH264 });
   setTimeout(() => {   // cap the bitrate: enough for a sharp picture, light on the phone and the Wi-Fi
     const snd = call?.peerConnection?.getSenders().find(x => x.track?.kind === 'video');
     if (!snd) return;
