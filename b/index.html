@@ -42,7 +42,7 @@ button.alt { background: transparent; color: var(--sky); border: 2px solid var(-
 <script type="module">
 // --- settings ---
 const TRACK_FPS = 15;            // pose updates per second sent to the TV; steady 15 keeps the phone cool, the TV smooths between them
-const CAM = { width: { ideal: 640 }, height: { ideal: 360 }, aspectRatio: { ideal: 16 / 9 }, frameRate: { ideal: 30, max: 30 } };  // 16:9 fills the TV edge to edge; 360p = light to encode and decode
+const CAM = { width: { ideal: 640 }, height: { ideal: 360 }, aspectRatio: { ideal: 16 / 9 }, frameRate: { ideal: 60, max: 60 } };  // 16:9 fills the TV edge to edge; 360p = light to encode; 60 fps so the TV isn't paced at 30
 const VIDEO_KBPS = 1500;         // live video to the TV; WebRTC lowers it by itself on weak Wi-Fi
 const LIB = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs';
 const WASM = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm';
@@ -113,7 +113,7 @@ function startVideo() {
     const snd = call?.peerConnection?.getSenders().find(x => x.track?.kind === 'video');
     if (!snd) return;
     const prm = snd.getParameters(); prm.encodings = prm.encodings?.length ? prm.encodings : [{}];
-    prm.encodings[0].maxBitrate = VIDEO_KBPS * 1000; prm.encodings[0].maxFramerate = 30;
+    prm.encodings[0].maxBitrate = VIDEO_KBPS * 1000; prm.encodings[0].maxFramerate = 60;
     snd.setParameters(prm).catch(() => {});
   }, 1500);
 }
